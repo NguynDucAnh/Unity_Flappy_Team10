@@ -15,11 +15,16 @@ public class ScoreMgr : MonoBehaviour {
         SetScore(nowScore);
     }
 
-    public void AddScore()
-    {
-        nowScore ++;
-        SetScore(nowScore);
-    }
+	public void AddScore()
+	{
+		nowScore++;
+		SetScore(nowScore);
+	}
+	public int GetScore()
+{
+    return nowScore;
+}
+
 
     public void SetScore(int score)
 	{

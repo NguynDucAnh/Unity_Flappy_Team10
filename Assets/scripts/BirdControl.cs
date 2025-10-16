@@ -2,11 +2,16 @@
 using System.Collections;
 using DG.Tweening;
 
-public class BirdControl : MonoBehaviour {
-
-	public int rotateRate = 10;
-	public float upSpeed = 10;
+public class BirdControl : MonoBehaviour
+{
+    public int rotateRate = 10;
+    public float upSpeed = 10;
     public GameObject scoreMgr;
+
+    // Đổi tên đúng class
+    public LeaderboardManager leaderboardManager;
+    public GameObject leaderboardCanvas;
+    public string playerName = "Player";
 
     public AudioClip jumpUp;
     public AudioClip hit;
@@ -14,13 +19,14 @@ public class BirdControl : MonoBehaviour {
 
     public bool inGame = false;
 
-	private bool dead = false;
-	private bool landed = false;
+    private bool dead = false;
+    private bool landed = false;
 
     private Sequence birdSequence;
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
         float birdOffset = 0.05f;
         float birdTime = 0.3f;
         float birdStartY = transform.position.y;
@@ -32,41 +38,39 @@ public class BirdControl : MonoBehaviour {
             .Append(transform.DOMoveY(birdStartY, birdTime).SetEase(Ease.Linear))
             .SetLoops(-1);
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    void Update()
+    {
         if (!inGame)
         {
             return;
         }
         birdSequence.Kill();
 
-		if (!dead)
-		{
-			if (Input.GetButtonDown("Fire1"))
-			{
+        if (!dead)
+        {
+            if (Input.GetButtonDown("Fire1"))
+            {
                 JumpUp();
-			}
-		}
+            }
+        }
 
-		if (!landed)
-		{
-			float v = transform.GetComponent<Rigidbody2D>().velocity.y;
-			
-			float rotate = Mathf.Min(Mathf.Max(-90, v * rotateRate + 60), 30);
-			
-			transform.rotation = Quaternion.Euler(0f, 0f, rotate);
-		}
-		else
-		{
-			transform.GetComponent<Rigidbody2D>().rotation = -90;
-		}
-	}
+        if (!landed)
+        {
+            float v = transform.GetComponent<Rigidbody2D>().velocity.y;
+            float rotate = Mathf.Min(Mathf.Max(-90, v * rotateRate + 60), 30);
+            transform.rotation = Quaternion.Euler(0f, 0f, rotate);
+        }
+        else
+        {
+            transform.GetComponent<Rigidbody2D>().rotation = -90;
+        }
+    }
 
-	void OnTriggerEnter2D (Collider2D other)
-	{
-		if (other.name == "land" || other.name == "pipe_up" || other.name == "pipe_down")
-		{
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.name == "land" || other.name == "pipe_up" || other.name == "pipe_down")
+        {
             if (!dead)
             {
                 GameObject[] objs = GameObject.FindGameObjectsWithTag("movable");
@@ -77,36 +81,47 @@ public class BirdControl : MonoBehaviour {
 
                 GetComponent<Animator>().SetTrigger("die");
                 AudioSource.PlayClipAtPoint(hit, Vector3.zero);
+
+                // === Save score when dead ===
+                if (leaderboardManager != null && scoreMgr != null)
+                {
+                   int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
+
+                    leaderboardManager.AddScore(playerName, currentScore);
+                    Debug.Log($"Saved score {currentScore} for {playerName}");
+                    FindObjectOfType<LeaderboardUI>()?.UpdateLeaderboard();
+                }
+
+                // === Show leaderboard ===
+                if (leaderboardCanvas != null)
+                {
+                    leaderboardCanvas.SetActive(true);
+                }
             }
 
-			
-
-			if (other.name == "land")
-			{
-				transform.GetComponent<Rigidbody2D>().gravityScale = 0;
-				transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
-
-				landed = true;
-			}
-		}
+            if (other.name == "land")
+            {
+                transform.GetComponent<Rigidbody2D>().gravityScale = 0;
+                transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
+                landed = true;
+            }
+        }
 
         if (other.name == "pass_trigger")
         {
             scoreMgr.GetComponent<ScoreMgr>().AddScore();
             AudioSource.PlayClipAtPoint(score, Vector3.zero);
         }
-
-
-	}
+    }
 
     public void JumpUp()
     {
         transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, upSpeed);
         AudioSource.PlayClipAtPoint(jumpUp, Vector3.zero);
     }
-	
-	public void GameOver()
-	{
-		dead = true;
-	}
+
+    public void GameOver()
+    {
+        dead = true;
+    }
 }
