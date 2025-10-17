@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
-public class StartMain : MonoBehaviour {
-
+public class StartMain : MonoBehaviour
+{
     public GameObject bird;
     public GameObject land;
     public GameObject back_ground;
@@ -11,38 +12,29 @@ public class StartMain : MonoBehaviour {
 
     private GameObject nowPressBtn = null;
 
-    // Use this for initialization
-    void Start () {      
-
+    void Start()
+    {
         // random background
         int index = Random.Range(0, back_list.Length);
-        back_ground.GetComponent<SpriteRenderer>().sprite = back_list[index];
-
-    }
-	
-	// Update is called once per frame
-	void Update () {
-        // Handle native touch events
-        foreach (Touch touch in Input.touches)
+        if (back_ground != null && back_list != null && back_list.Length > 0)
         {
-            HandleTouch(touch.fingerId, touch.position, touch.phase);
+            var sr = back_ground.GetComponent<SpriteRenderer>();
+            if (sr) sr.sprite = back_list[index];
         }
+    }
 
-        // Simulate touch events from mouse events
+    void Update()
+    {
+        // Touch
+        foreach (Touch touch in Input.touches)
+            HandleTouch(touch.fingerId, touch.position, touch.phase);
+
+        // Mouse giả lập touch
         if (Input.touchCount == 0)
         {
-            if (Input.GetMouseButtonDown(0))
-            {
-                HandleTouch(10, Input.mousePosition, TouchPhase.Began);
-            }
-            if (Input.GetMouseButton(0))
-            {
-                HandleTouch(10, Input.mousePosition, TouchPhase.Moved);
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                HandleTouch(10, Input.mousePosition, TouchPhase.Ended);
-            }
+            if (Input.GetMouseButtonDown(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Began);
+            if (Input.GetMouseButton(0))     HandleTouch(10, Input.mousePosition, TouchPhase.Moved);
+            if (Input.GetMouseButtonUp(0))   HandleTouch(10, Input.mousePosition, TouchPhase.Ended);
         }
     }
 
@@ -50,26 +42,21 @@ public class StartMain : MonoBehaviour {
     {
         Vector3 wp = Camera.main.ScreenToWorldPoint(touchPosition);
         Vector2 worldPos = new Vector2(wp.x, wp.y);
+
         switch (touchPhase)
         {
             case TouchPhase.Began:
-                print(touchPosition);
-                print(worldPos);
-
-                foreach(Collider2D c in Physics2D.OverlapPointAll(worldPos))
+                foreach (Collider2D c in Physics2D.OverlapPointAll(worldPos))
                 {
-                    name = c.gameObject.name;
-                    print(name);
-                    if (name == "start_btn" || name == "rank_btn" || name == "rate_btn")
+                    string n = c.gameObject.name;
+                    if (n == "start_btn" || n == "rank_btn" || n == "rate_btn")
                     {
                         c.transform.DOMoveY(c.transform.position.y - 0.03f, 0f);
                         nowPressBtn = c.gameObject;
                     }
                 }
                 break;
-            case TouchPhase.Moved:
-                // TODO
-                break;
+
             case TouchPhase.Ended:
                 if (nowPressBtn)
                 {
@@ -77,28 +64,23 @@ public class StartMain : MonoBehaviour {
 
                     foreach (Collider2D c in Physics2D.OverlapPointAll(worldPos))
                     {
-                        name = c.gameObject.name;
-                        print(name);
-
-                        if (name == nowPressBtn.name)
+                        if (c.gameObject.name == nowPressBtn.name)
                         {
-                            if (name == "start_btn")
-                            {
+                            if (nowPressBtn.name == "start_btn")
                                 OnPressStart();
-                            }
                         }
                     }
-
                     nowPressBtn = null;
                 }
-
-                
                 break;
         }
     }
 
     private void OnPressStart()
     {
-        Application.LoadLevel(1);
+        
+        SceneManager.LoadScene("GameScene");
+
+        
     }
 }
