@@ -79,7 +79,7 @@ public class StartMain : MonoBehaviour
     private void OnPressStart()
     {
         
-        SceneManager.LoadScene("GameScene");
+    SceneManager.LoadScene("ModeSelectScene");
 
         
     }
