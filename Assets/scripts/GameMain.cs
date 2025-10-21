@@ -2,7 +2,8 @@
 using System.Collections;
 using DG.Tweening;
 
-public class GameMain : MonoBehaviour {
+public class GameMain : MonoBehaviour
+{
 
     public GameObject bird;
     public GameObject readyPic;
@@ -10,15 +11,18 @@ public class GameMain : MonoBehaviour {
     public GameObject scoreMgr;
     public GameObject pipeSpawner;
 
+
     private bool gameStarted = false;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    // Use this for initialization
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
         if (!gameStarted && Input.GetButtonDown("Fire1"))
         {
             gameStarted = true;

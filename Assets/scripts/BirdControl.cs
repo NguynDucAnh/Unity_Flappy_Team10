@@ -5,7 +5,7 @@ using DG.Tweening;
 public class BirdControl : MonoBehaviour
 {
 
-    public int rotateRate = 10;
+    public int rotateRate = 3;
     public float upSpeed = 10;
     public GameObject scoreMgr;
     public GameObject gameOverPanel;
@@ -57,7 +57,9 @@ public class BirdControl : MonoBehaviour
         {
             float v = transform.GetComponent<Rigidbody2D>().velocity.y;
 
-            float rotate = Mathf.Min(Mathf.Max(-90, v * rotateRate + 60), 30);
+            float rotate = Mathf.Clamp(v * 2f, -45f, 10f);
+
+
 
             transform.rotation = Quaternion.Euler(0f, 0f, rotate);
         }
@@ -69,6 +71,9 @@ public class BirdControl : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        // 🚫 Bỏ qua va chạm khi game chưa bắt đầu
+        if (!inGame) return;
+
         if (other.name == "land" || other.name == "pipe_up" || other.name == "pipe_down")
         {
             if (!dead)
@@ -82,7 +87,7 @@ public class BirdControl : MonoBehaviour
                 GetComponent<Animator>().SetTrigger("die");
                 AudioSource.PlayClipAtPoint(hit, Vector3.zero);
 
-                // Hiển thị Game Over Panel sau một khoảng delay nhỏ
+                // Hiện panel Game Over sau 1 giây
                 StartCoroutine(ShowGameOverDelay());
             }
 
@@ -90,7 +95,6 @@ public class BirdControl : MonoBehaviour
             {
                 transform.GetComponent<Rigidbody2D>().gravityScale = 0;
                 transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
-
                 landed = true;
             }
         }
