@@ -21,6 +21,7 @@ public class StartMain : MonoBehaviour
             var sr = back_ground.GetComponent<SpriteRenderer>();
             if (sr) sr.sprite = back_list[index];
         }
+           FindObjectOfType<LeaderboardUI>()?.UpdateLeaderboardUI();
     }
 
     void Update()

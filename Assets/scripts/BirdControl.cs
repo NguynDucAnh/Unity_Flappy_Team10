@@ -82,6 +82,16 @@ public class BirdControl : MonoBehaviour
                 GetComponent<Animator>().SetTrigger("die");
                 AudioSource.PlayClipAtPoint(hit, Vector3.zero);
 
+            }
+
+
+
+            if (other.name == "land")
+            {
+                transform.GetComponent<Rigidbody2D>().gravityScale = 0;
+                transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
+
+
                 // Hiển thị Game Over Panel sau một khoảng delay nhỏ
                 StartCoroutine(ShowGameOverDelay());
             }
@@ -106,11 +116,13 @@ public class BirdControl : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
 
+
         if (gameOverPanel != null)
         {
             int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetCurrentScore();
             gameOverPanel.GetComponent<GameOverPanel>().ShowGameOver(currentScore);
         }
+
     }
 
     public void JumpUp()
@@ -121,6 +133,33 @@ public class BirdControl : MonoBehaviour
 
     public void GameOver()
     {
-        dead = true;
+
+        if (!dead)
+        {
+            dead = true;
+
+            int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
+            Debug.Log($"Game Over! Final Score = {finalScore}");
+
+            if (LeaderboardMgr.Instance == null)
+            {
+                Debug.LogError("❌ LeaderboardMgr.Instance is NULL — chưa có trong Scene hoặc bị Destroy!");
+                return;
+            }
+
+            LeaderboardMgr.Instance.AddScore("Player", finalScore);
+            Debug.Log("✅ Score added to Leaderboard!");
+
+            // 🔄 Cập nhật bảng xếp hạng ngay
+            LeaderboardUI ui = FindObjectOfType<LeaderboardUI>();
+            if (ui != null)
+            {
+                ui.ForceUpdate();
+                Debug.Log("📋 Leaderboard UI refreshed!");
+            }
+
+        }
+
+
     }
 }

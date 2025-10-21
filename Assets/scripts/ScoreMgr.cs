@@ -68,4 +68,9 @@ public class ScoreMgr : MonoBehaviour
 
 		nowScore = score;
 	}
+	public int GetScore()
+{
+    return nowScore;
+}
+
 }
