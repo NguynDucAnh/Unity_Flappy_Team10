@@ -1,25 +1,31 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ScoreMgr : MonoBehaviour {
+public class ScoreMgr : MonoBehaviour
+{
 
 	public GameObject[] scorePrefabs;
 	public float digitOffset;
 
 	private GameObject[] nowShowScores = new GameObject[5];
-    private int nowScore = 0;
+	private int nowScore = 0;
 
-    void Start()
-    {
-        nowScore = 0;
-        SetScore(nowScore);
-    }
+	void Start()
+	{
+		nowScore = 0;
+		SetScore(nowScore);
+	}
 
-    public void AddScore()
-    {
-        nowScore ++;
-        SetScore(nowScore);
-    }
+	public void AddScore()
+	{
+		nowScore++;
+		SetScore(nowScore);
+	}
+
+	public int GetCurrentScore()
+	{
+		return nowScore;
+	}
 
 	public void SetScore(int score)
 	{
@@ -59,6 +65,8 @@ public class ScoreMgr : MonoBehaviour {
 			nowShowScores[i] = Instantiate(scorePrefabs[digits[i]], pos, transform.rotation) as GameObject;
 			nowOffset -= digitOffset;
 		}
+
+		nowScore = score;
 	}
 	public int GetScore()
 {

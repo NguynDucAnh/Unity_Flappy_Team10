@@ -8,6 +8,7 @@ public class BirdControl : MonoBehaviour
     public int rotateRate = 10;
     public float upSpeed = 10;
     public GameObject scoreMgr;
+    public GameObject gameOverPanel;
 
     public AudioClip jumpUp;
     public AudioClip hit;
@@ -90,6 +91,16 @@ public class BirdControl : MonoBehaviour
                 transform.GetComponent<Rigidbody2D>().gravityScale = 0;
                 transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
 
+
+                // Hiển thị Game Over Panel sau một khoảng delay nhỏ
+                StartCoroutine(ShowGameOverDelay());
+            }
+
+            if (other.name == "land")
+            {
+                transform.GetComponent<Rigidbody2D>().gravityScale = 0;
+                transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
+
                 landed = true;
             }
         }
@@ -99,7 +110,18 @@ public class BirdControl : MonoBehaviour
             scoreMgr.GetComponent<ScoreMgr>().AddScore();
             AudioSource.PlayClipAtPoint(score, Vector3.zero);
         }
+    }
 
+    IEnumerator ShowGameOverDelay()
+    {
+        yield return new WaitForSeconds(1f);
+
+
+        if (gameOverPanel != null)
+        {
+            int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetCurrentScore();
+            gameOverPanel.GetComponent<GameOverPanel>().ShowGameOver(currentScore);
+        }
 
     }
 
@@ -111,6 +133,7 @@ public class BirdControl : MonoBehaviour
 
     public void GameOver()
     {
+
         if (!dead)
         {
             dead = true;
@@ -136,6 +159,7 @@ public class BirdControl : MonoBehaviour
             }
 
         }
+
 
     }
 }
