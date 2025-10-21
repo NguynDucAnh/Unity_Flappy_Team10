@@ -8,6 +8,7 @@ public class BirdControl : MonoBehaviour
     public int rotateRate = 10;
     public float upSpeed = 10;
     public GameObject scoreMgr;
+    public GameObject gameOverPanel;
 
     public AudioClip jumpUp;
     public AudioClip hit;
@@ -46,21 +47,6 @@ public class BirdControl : MonoBehaviour
 
         if (!dead)
         {
-            // Check if bird is outside the screen
-            Vector3 screenPoint = Camera.main.WorldToViewportPoint(transform.position);
-            if (screenPoint.y > 1)
-            {
-                GameObject[] objs = GameObject.FindGameObjectsWithTag("movable");
-                foreach (GameObject g in objs)
-                {
-                    g.BroadcastMessage("GameOver");
-                }
-
-                GetComponent<Animator>().SetTrigger("die");
-                AudioSource.PlayClipAtPoint(hit, Vector3.zero);
-                dead = true;
-            }
-
             if (Input.GetButtonDown("Fire1"))
             {
                 JumpUp();
@@ -95,9 +81,20 @@ public class BirdControl : MonoBehaviour
 
                 GetComponent<Animator>().SetTrigger("die");
                 AudioSource.PlayClipAtPoint(hit, Vector3.zero);
+
             }
 
 
+
+            if (other.name == "land")
+            {
+                transform.GetComponent<Rigidbody2D>().gravityScale = 0;
+                transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
+
+
+                // Hiển thị Game Over Panel sau một khoảng delay nhỏ
+                StartCoroutine(ShowGameOverDelay());
+            }
 
             if (other.name == "land")
             {
@@ -113,7 +110,18 @@ public class BirdControl : MonoBehaviour
             scoreMgr.GetComponent<ScoreMgr>().AddScore();
             AudioSource.PlayClipAtPoint(score, Vector3.zero);
         }
+    }
 
+    IEnumerator ShowGameOverDelay()
+    {
+        yield return new WaitForSeconds(1f);
+
+
+        if (gameOverPanel != null)
+        {
+            int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetCurrentScore();
+            gameOverPanel.GetComponent<GameOverPanel>().ShowGameOver(currentScore);
+        }
 
     }
 
@@ -125,6 +133,33 @@ public class BirdControl : MonoBehaviour
 
     public void GameOver()
     {
-        dead = true;
+
+        if (!dead)
+        {
+            dead = true;
+
+            int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
+            Debug.Log($"Game Over! Final Score = {finalScore}");
+
+            if (LeaderboardMgr.Instance == null)
+            {
+                Debug.LogError("❌ LeaderboardMgr.Instance is NULL — chưa có trong Scene hoặc bị Destroy!");
+                return;
+            }
+
+            LeaderboardMgr.Instance.AddScore("Player", finalScore);
+            Debug.Log("✅ Score added to Leaderboard!");
+
+            // 🔄 Cập nhật bảng xếp hạng ngay
+            LeaderboardUI ui = FindObjectOfType<LeaderboardUI>();
+            if (ui != null)
+            {
+                ui.ForceUpdate();
+                Debug.Log("📋 Leaderboard UI refreshed!");
+            }
+
+        }
+
+
     }
 }
