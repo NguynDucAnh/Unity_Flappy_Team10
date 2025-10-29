@@ -24,7 +24,21 @@ public class StartMain : MonoBehaviour
             var sr = back_ground.GetComponent<SpriteRenderer>();
             if (sr) sr.sprite = back_list[index];
         }
+
+        // 👇 Thêm đoạn này
+        if (PlayerPrefs.HasKey("NewScore"))
+        {
+            int score = PlayerPrefs.GetInt("NewScore");
+            LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
+            if (lb != null)
+            {
+                lb.AddNewScore(score);
+                lb.UpdateLeaderboardUI();
+            }
+            PlayerPrefs.DeleteKey("NewScore");
+        }
     }
+
 
     void Update()
     {
@@ -73,6 +87,9 @@ public class StartMain : MonoBehaviour
                                 OnPressStart();
                             else if (nowPressBtn.name == "rate_btn")
                                 OnPressRate();
+                            else if (nowPressBtn.name == "rank_btn")
+                                OnPressRank();   // 👈 thêm dòng này
+
                         }
                     }
                     nowPressBtn = null;
@@ -85,6 +102,19 @@ public class StartMain : MonoBehaviour
     {
         SceneManager.LoadScene("GameScene");
     }
+    private void OnPressRank()
+    {
+        LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
+        if (lb != null)
+        {
+            lb.ShowLeaderboard();
+        }
+        else
+        {
+            Debug.LogWarning("LeaderboardMgr not found in scene!");
+        }
+    }
+
 
     private void OnPressRate()
     {
