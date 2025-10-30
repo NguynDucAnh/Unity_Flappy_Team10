@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using DG.Tweening;
+using UnityEngine.UI;
 
 public class GameMain : MonoBehaviour
 {
@@ -42,4 +43,18 @@ public class GameMain : MonoBehaviour
         scoreMgr.GetComponent<ScoreMgr>().SetScore(0);
         pipeSpawner.GetComponent<PipeSpawner>().StartSpawning();
     }
+    public void GameOver()
+{
+    // Dừng tạo ống
+    pipeSpawner.GetComponent<PipeSpawner>().GameOver();
+
+    // Lấy điểm hiện tại
+    int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
+
+    // Lưu vào leaderboard
+    LeaderboardMgr.Instance.AddScore("Player", finalScore);
+
+    Debug.Log($"Game Over! Final Score = {finalScore}");
+}
+
 }
