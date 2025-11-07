@@ -25,15 +25,23 @@ public class StartMain : MonoBehaviour
             if (sr) sr.sprite = back_list[index];
         }
 
-        // 👇 Thêm đoạn này
+        // 👇 [SỬA LỖI] Cập nhật logic để tương thích với LeaderboardMgr Singleton
         if (PlayerPrefs.HasKey("NewScore"))
         {
             int score = PlayerPrefs.GetInt("NewScore");
-            LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
-            if (lb != null)
+            
+            // Sử dụng Singleton Instance thay vì FindObjectOfType
+            if (LeaderboardMgr.Instance != null)
             {
-                lb.AddNewScore(score);
-                lb.UpdateLeaderboardUI();
+                // [SỬA LỖI 1] Dùng AddScore(name, score) thay vì AddNewScore(score)
+                // Tạm thời dùng "Player" làm tên mặc định
+                LeaderboardMgr.Instance.AddScore("Player", score);
+
+                // [SỬA LỖI 2] Gọi ForceUpdate() trên đối tượng UI
+                if (LeaderboardMgr.Instance.ui != null)
+                {
+                    LeaderboardMgr.Instance.ui.ForceUpdate();
+                }
             }
             PlayerPrefs.DeleteKey("NewScore");
         }
@@ -104,10 +112,10 @@ public class StartMain : MonoBehaviour
     }
     private void OnPressRank()
     {
-        LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
-        if (lb != null)
+        // [SỬA LỖI] Dùng LeaderboardMgr.Instance
+        if (LeaderboardMgr.Instance != null)
         {
-            lb.ShowLeaderboard();
+            LeaderboardMgr.Instance.ShowLeaderboard();
         }
         else
         {
