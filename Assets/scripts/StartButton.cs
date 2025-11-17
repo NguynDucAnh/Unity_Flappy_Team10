@@ -6,6 +6,6 @@ public class StartButton : MonoBehaviour
     private void OnMouseDown()
     {
         // Khi click chuột vào object này (có collider)
-        SceneManager.LoadScene("MapSelectScene");
+        SceneManager.LoadScene("UpdateMap");
     }
 }
