@@ -52,7 +52,7 @@ public class GameMain : MonoBehaviour
     int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
 
     // Lưu vào leaderboard
-    LeaderboardMgr.Instance.AddScore("Player", finalScore);
+    LeaderboardMgr.Instance.AddNewScore( finalScore);
 
     Debug.Log($"Game Over! Final Score = {finalScore}");
 }
