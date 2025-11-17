@@ -4,137 +4,75 @@ using System.Collections.Generic;
 
 public class LeaderboardMgr : MonoBehaviour
 {
-    // Singleton
-    public static LeaderboardMgr Instance { get; private set; }
+        public static LeaderboardMgr Instance;
+public List<(string playerName, int score)> leaderboard = new List<(string playerName, int score)>();
 
-    [Header("Cấu hình")]
-    public int maxEntries = 10;
-    private const string PREF_KEY = "LeaderboardData";
-
-    [Header("UI (Tự gán hoặc kéo thả)")]
     public GameObject leaderboardPanel;
-    public LeaderboardUI ui;
+    public Text[] scoreTexts; // 5 dòng text
+    private List<int> topScores = new List<int>();
+    private const string PREF_KEY = "TopScores";
 
-    // Dữ liệu
-    public List<LeaderboardEntry> leaderboard = new List<LeaderboardEntry>();
-
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadLeaderboard();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
     void Start()
     {
-        if (ui == null)
-            ui = FindObjectOfType<LeaderboardUI>();
-
-        if (leaderboardPanel != null)
-            leaderboardPanel.SetActive(false);
-        else
-            Debug.LogWarning("Leaderboard Panel chưa được gán!");
+        LoadScores();
+        UpdateLeaderboardUI();
+        leaderboardPanel.SetActive(false);
     }
 
     public void ShowLeaderboard()
     {
-        if (leaderboardPanel != null)
-            leaderboardPanel.SetActive(true);
-        
-        if (ui != null)
-            ui.ForceUpdate();
-        else
-            Debug.LogWarning("Leaderboard UI chưa được gán!");
+        LoadScores();
+        UpdateLeaderboardUI();
+        leaderboardPanel.SetActive(true);
     }
 
     public void HideLeaderboard()
     {
-        if (leaderboardPanel != null)
-            leaderboardPanel.SetActive(false);
+        leaderboardPanel.SetActive(false);
     }
 
-    public void AddScore(string playerName, int score)
+    public void AddNewScore(int newScore)
     {
-        leaderboard.Add(new LeaderboardEntry(playerName, score));
-        
-        // Sắp xếp giảm dần theo điểm
-        leaderboard.Sort((a, b) => b.score.CompareTo(a.score));
+        LoadScores();
+        topScores.Add(newScore);
+        topScores.Sort((a, b) => b.CompareTo(a)); // Sắp xếp giảm dần
 
-        // Giới hạn số lượng
-        if (leaderboard.Count > maxEntries)
-            leaderboard = leaderboard.GetRange(0, maxEntries);
+        if (topScores.Count > 5)
+            topScores = topScores.GetRange(0, 5);
 
-        SaveLeaderboard();
-        
-        // Cập nhật UI nếu nó đang mở
-        if (ui != null && leaderboardPanel.activeSelf)
-            ui.ForceUpdate();
+        SaveScores();
     }
 
-    private void SaveLeaderboard()
+    private void SaveScores()
     {
-        LeaderboardData data = new LeaderboardData(leaderboard);
-        string json = JsonUtility.ToJson(data);
-        PlayerPrefs.SetString(PREF_KEY, json);
+        string data = string.Join(",", topScores);
+        PlayerPrefs.SetString(PREF_KEY, data);
         PlayerPrefs.Save();
-        Debug.Log("✅ Leaderboard saved!");
     }
 
-    private void LoadLeaderboard()
+    private void LoadScores()
     {
-        string json = PlayerPrefs.GetString(PREF_KEY, "");
-        if (!string.IsNullOrEmpty(json))
+        topScores.Clear();
+        string data = PlayerPrefs.GetString(PREF_KEY, "");
+        if (!string.IsNullOrEmpty(data))
         {
-            LeaderboardData data = JsonUtility.FromJson<LeaderboardData>(json);
-            leaderboard = data.entries;
-            Debug.Log($"✅ Leaderboard loaded with {leaderboard.Count} entries.");
-        }
-        else
-        {
-            Debug.Log("No leaderboard data found. Initializing new list.");
-            leaderboard = new List<LeaderboardEntry>();
+            string[] parts = data.Split(',');
+            foreach (string p in parts)
+            {
+                if (int.TryParse(p, out int val))
+                    topScores.Add(val);
+            }
         }
     }
 
-    // Hàm reset (để test)
-    [ContextMenu("Reset Leaderboard")]
-    public void ResetLeaderboard()
+    public void UpdateLeaderboardUI()
     {
-        leaderboard.Clear();
-        PlayerPrefs.DeleteKey(PREF_KEY);
-        SaveLeaderboard();
-        if (ui != null) ui.ForceUpdate();
-        Debug.Log("Reset Leaderboard!");
-    }
-}
-
-// Lớp để lưu trữ
-[System.Serializable]
-public class LeaderboardEntry
-{
-    public string playerName;
-    public int score;
-
-    public LeaderboardEntry(string name, int s)
-    {
-        playerName = name;
-        score = s;
-    }
-}
-
-// Lớp wrapper để JsonUtility có thể
-[System.Serializable]
-public class LeaderboardData
-{
-    public List<LeaderboardEntry> entries;
-    public LeaderboardData(List<LeaderboardEntry> list)
-    {
-        entries = list;
+        for (int i = 0; i < scoreTexts.Length; i++)
+        {
+            if (i < topScores.Count)
+                scoreTexts[i].text = $"{i + 1}. {topScores[i]}";
+            else
+                scoreTexts[i].text = $"{i + 1}. ---";
+        }
     }
 }

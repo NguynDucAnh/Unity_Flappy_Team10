@@ -141,7 +141,8 @@ public class BirdControl : MonoBehaviour
                 return;
             }
 
-            LeaderboardMgr.Instance.AddScore("Player", finalScore);
+     LeaderboardMgr.Instance.AddNewScore(finalScore);
+
             Debug.Log("✅ Score added to Leaderboard!");
 
             // 🔄 Cập nhật bảng xếp hạng ngay
