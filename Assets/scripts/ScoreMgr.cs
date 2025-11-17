@@ -1,76 +1,58 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TMPro; // ✅ THÊM DÒNG NÀY
 
 public class ScoreMgr : MonoBehaviour
 {
+    // ✅ THÊM:
+    public static ScoreMgr Instance { get; private set; }
+    public TextMeshProUGUI scoreText; // Kéo TextMeshPro UI vào đây
 
-	public GameObject[] scorePrefabs;
-	public float digitOffset;
+    // ❌ XÓA: public GameObject[] scorePrefabs;
+    // ❌ XÓA: public float digitOffset;
+    // ❌ XÓA: private GameObject[] nowShowScores = new GameObject[5];
 
-	private GameObject[] nowShowScores = new GameObject[5];
-	private int nowScore = 0;
+    private int nowScore = 0;
 
-	void Start()
-	{
-		nowScore = 0;
-		SetScore(nowScore);
-	}
+    void Awake()
+    {
+        Instance = this; // Tạo Singleton
+        GameManager.OnScorePoint += AddScore; // Lắng nghe sự kiện
+        GameManager.OnGameStarted += () => { SetScore(0); }; // Reset điểm khi game start
+    }
 
-	public void AddScore()
-	{
-		nowScore++;
-		SetScore(nowScore);
-	}
+    void OnDestroy()
+    {
+        GameManager.OnScorePoint -= AddScore;
+        GameManager.OnGameStarted -= () => { SetScore(0); };
+    }
 
-	public int GetCurrentScore()
-	{
-		return nowScore;
-	}
+    public void AddScore()
+    {
+        nowScore++;
+        SetScore(nowScore);
+    }
 
-	public void SetScore(int score)
-	{
-		int tmpScore = score;
-		int[] digits = new int[5];
-		int index = 0;
+    public int GetCurrentScore()
+    {
+        return nowScore;
+    }
 
-		do
-		{
-			digits[index] = tmpScore % 10;
-			tmpScore = tmpScore / 10;
-			index++;
-		} while (tmpScore != 0);
+    public void SetScore(int score)
+    {
+        nowScore = score;
 
-		int scoreSize = 1;
-		for (int i = 0; i < 5; i++)
-		{
-			if (digits[i] != 0)
-			{
-				scoreSize = i + 1;
-			}
-		}
-		scoreSize = scoreSize == 0 ? 1 : scoreSize;
+        // ✅ ĐƠN GIẢN HÓA:
+        if (scoreText != null)
+        {
+            scoreText.text = nowScore.ToString();
+        }
 
-		float nowOffset = (scoreSize - 1) * digitOffset / 2;
-		for (int i = 0; i < scoreSize; i++)
-		{
-			if (nowShowScores[i] != null)
-			{
-				Destroy(nowShowScores[i]);
-			}
+        // ❌ XÓA: Toàn bộ vòng lặp for và logic "digits"
+    }
 
-			float nowX = transform.position.x + nowOffset;
-
-			Vector2 pos = new Vector2(nowX, transform.position.y);
-
-			nowShowScores[i] = Instantiate(scorePrefabs[digits[i]], pos, transform.rotation) as GameObject;
-			nowOffset -= digitOffset;
-		}
-
-		nowScore = score;
-	}
-	public int GetScore()
-{
-    return nowScore;
-}
-
+    public int GetScore()
+    {
+        return nowScore;
+    }
 }

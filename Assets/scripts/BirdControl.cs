@@ -4,24 +4,39 @@ using DG.Tweening;
 
 public class BirdControl : MonoBehaviour
 {
-
+    // --- Các biến cài đặt gốc ---
     public int rotateRate = 3;
     public float upSpeed = 10;
-    public GameObject scoreMgr;
-    public GameObject gameOverPanel;
 
-    public AudioClip jumpUp;
-    public AudioClip hit;
-    public AudioClip score;
-
-    public bool inGame = false;
-
+    // --- Các biến nội bộ ---
+    private MapData currentMap;
+    private bool inGame = false;
     private bool dead = false;
-    private bool landed = false;
-
+    private bool landed = false; // ✅ Giữ lại biến này để xử lý logic xoay khi chạm đất
     private Sequence birdSequence;
 
-    // Use this for initialization
+    // --- Tái cấu trúc: Đăng ký sự kiện ---
+    void Awake()
+    {
+        // Thử lấy MapData, nếu không có (ví dụ: test scene) thì không sao
+        if (GameManager.Instance != null)
+        {
+            currentMap = GameManager.Instance.CurrentMapData;
+        }
+        
+        // Đăng ký sự kiện
+        GameManager.OnGameStarted += OnGameStarted;
+        GameManager.OnGameOver += OnGameOver;
+    }
+
+    // --- Tái cấu trúc: Hủy đăng ký sự kiện ---
+    void OnDestroy()
+    {
+        GameManager.OnGameStarted -= OnGameStarted;
+        GameManager.OnGameOver -= OnGameOver;
+    }
+
+    // --- ✅ PHỤC HỒI CODE GỐC: Logic animation lượn sóng ban đầu ---
     void Start()
     {
         float birdOffset = 0.05f;
@@ -36,15 +51,46 @@ public class BirdControl : MonoBehaviour
             .SetLoops(-1);
     }
 
-    // Update is called once per frame
+    // --- Tái cấu trúc: Logic khi Game Bắt đầu ---
+    private void OnGameStarted()
+    {
+        inGame = true;
+        GetComponent<Rigidbody2D>().isKinematic = false; // Bật trọng lực
+        if (birdSequence != null) // Check null cho an toàn
+        {
+            birdSequence.Kill(); // Dừng lượn sóng
+        }
+        JumpUp(); // Nhảy lần đầu
+    }
+
+    // --- Tái cấu trúc: Logic khi Game Kết thúc ---
+    private void OnGameOver()
+    {
+        inGame = false;
+        dead = true;
+        
+        // Dừng tất cả vật thể di chuyển
+        GameObject[] objs = GameObject.FindGameObjectsWithTag("movable");
+        foreach (GameObject g in objs)
+        {
+            // Dùng StopSpawning cho PipeSpawner và GameOver cho các cái khác
+            if (g.GetComponent<PipeSpawner>() != null)
+            {
+                g.GetComponent<PipeSpawner>().StopSpawning();
+            }
+            else
+            {
+                g.BroadcastMessage("GameOver"); // Dùng cho LandControl, PipeMove cũ (nếu còn)
+            }
+        }
+    }
+
+    // --- ✅ HỢP NHẤT: Logic Update (Input + Xoay) ---
     void Update()
     {
-        if (!inGame)
-        {
-            return;
-        }
-        birdSequence.Kill();
+        if (!inGame) return; // Chờ game bắt đầu
 
+        // Logic Input
         if (!dead)
         {
             if (Input.GetButtonDown("Fire1"))
@@ -53,44 +99,40 @@ public class BirdControl : MonoBehaviour
             }
         }
 
+        // ✅ PHỤC HỒI CODE GỐC: Logic xoay chim
         if (!landed)
         {
             float v = transform.GetComponent<Rigidbody2D>().velocity.y;
-
             float rotate = Mathf.Clamp(v * 2f, -45f, 10f);
-
-
-
             transform.rotation = Quaternion.Euler(0f, 0f, rotate);
         }
         else
         {
+            // Nếu đã chạm đất, giữ chim cắm đầu xuống
             transform.GetComponent<Rigidbody2D>().rotation = -90;
         }
     }
 
+    // --- ✅ HỢP NHẤT: Logic Va chạm (Collision) ---
     void OnTriggerEnter2D(Collider2D other)
     {
-        // 🚫 Bỏ qua va chạm khi game chưa bắt đầu
         if (!inGame) return;
 
+        // Va chạm với ống hoặc đất
         if (other.name == "land" || other.name == "pipe_up" || other.name == "pipe_down")
         {
             if (!dead)
             {
-                GameObject[] objs = GameObject.FindGameObjectsWithTag("movable");
-                foreach (GameObject g in objs)
-                {
-                    g.BroadcastMessage("GameOver");
-                }
+                // ✅ Tái cấu trúc: Thông báo cho GameManager
+                GameManager.Instance.EndGame(); 
 
                 GetComponent<Animator>().SetTrigger("die");
-                AudioSource.PlayClipAtPoint(hit, Vector3.zero);
-
-                // Hiện panel Game Over sau 1 giây
-                StartCoroutine(ShowGameOverDelay());
+                // Phát âm thanh va chạm từ MapData
+                if (currentMap != null) 
+                    AudioSource.PlayClipAtPoint(currentMap.hitSound, Vector3.zero);
             }
 
+            // ✅ PHỤC HỒI CODE GỐC: Logic chạm đất
             if (other.name == "land")
             {
                 transform.GetComponent<Rigidbody2D>().gravityScale = 0;
@@ -99,62 +141,26 @@ public class BirdControl : MonoBehaviour
             }
         }
 
+        // Ghi điểm
         if (other.name == "pass_trigger")
         {
-            scoreMgr.GetComponent<ScoreMgr>().AddScore();
-            AudioSource.PlayClipAtPoint(score, Vector3.zero);
+            // ✅ Tái cấu trúc: Thông báo cho GameManager
+            GameManager.Instance.AddScore();
+            // Phát âm thanh ghi điểm từ MapData
+            if (currentMap != null)
+                AudioSource.PlayClipAtPoint(currentMap.scoreSound, Vector3.zero);
         }
     }
 
-    IEnumerator ShowGameOverDelay()
-    {
-        yield return new WaitForSeconds(1f);
-
-
-        if (gameOverPanel != null)
-        {
-            int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetCurrentScore();
-            gameOverPanel.GetComponent<GameOverPanel>().ShowGameOver(currentScore);
-        }
-
-    }
-
+    // --- Tái cấu trúc: Logic Nhảy ---
     public void JumpUp()
     {
+        if (dead || !inGame) return; // Không cho nhảy khi chết hoặc game chưa bắt đầu
+        
         transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, upSpeed);
-        AudioSource.PlayClipAtPoint(jumpUp, Vector3.zero);
-    }
-
-    public void GameOver()
-    {
-
-        if (!dead)
-        {
-            dead = true;
-
-            int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
-            Debug.Log($"Game Over! Final Score = {finalScore}");
-
-            if (LeaderboardMgr.Instance == null)
-            {
-                Debug.LogError("❌ LeaderboardMgr.Instance is NULL — chưa có trong Scene hoặc bị Destroy!");
-                return;
-            }
-
-     LeaderboardMgr.Instance.AddNewScore(finalScore);
-
-            Debug.Log("✅ Score added to Leaderboard!");
-
-            // 🔄 Cập nhật bảng xếp hạng ngay
-            LeaderboardUI ui = FindObjectOfType<LeaderboardUI>();
-            if (ui != null)
-            {
-                ui.ForceUpdate();
-                Debug.Log("📋 Leaderboard UI refreshed!");
-            }
-
-        }
-
-
+        
+        // Phát âm thanh nhảy từ MapData
+        if (currentMap != null)
+            AudioSource.PlayClipAtPoint(currentMap.jumpSound, Vector3.zero);
     }
 }

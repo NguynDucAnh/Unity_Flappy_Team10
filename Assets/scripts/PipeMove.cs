@@ -3,25 +3,49 @@ using System.Collections;
 
 public class PipeMove : MonoBehaviour {
 
-	public float moveSpeed;
+    // ✅ Biến 'static' này sẽ được set bởi GameMain (SceneInitializer)
+    //    và được dùng chung bởi cả LandControl.
+    public static float scrollSpeed = 5f; 
 
-	// Use this for initialization
-	void Start () {
-		Rigidbody2D body = transform.GetComponent<Rigidbody2D>();
-		body.velocity = new Vector2(moveSpeed, 0);
-	}
+    private bool inGame = false;
 
-	// Update is called once per frame
-	void Update () {
-		if (transform.position.x <= -0.4) 
-		{
-			Destroy(gameObject);
-		}
-	}
+    void Awake()
+    {
+        // Lắng nghe GameManager thông báo
+        GameManager.OnGameStarted += OnGameStarted;
+        GameManager.OnGameOver += OnGameOver;
+    }
 
-	public void GameOver()
-	{
-		Rigidbody2D body = transform.GetComponent<Rigidbody2D>();
-		body.velocity = new Vector2(0, 0);
-	}
+    void OnDestroy()
+    {
+        // Hủy đăng ký khi ống bị hủy (rất quan trọng)
+        GameManager.OnGameStarted -= OnGameStarted;
+        GameManager.OnGameOver -= OnGameOver;
+    }
+
+    private void OnGameStarted()
+    {
+        inGame = true;
+    }
+
+    private void OnGameOver()
+    {
+        inGame = false;
+    }
+    
+    void Update () 
+    {
+        // Chỉ di chuyển khi game đang chạy
+        if (!inGame) return; 
+
+        // Sử dụng biến static 'scrollSpeed'
+        transform.Translate(Vector2.left * scrollSpeed * Time.deltaTime);
+
+        if (transform.position.x < -10)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    // ❌ Xóa hàm GameOver() cũ, vì giờ chúng ta dùng Event 'OnGameOver'
 }

@@ -1,82 +1,82 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using DG.Tweening;
+using System.Collections;
+using TMPro; // Sử dụng TextMeshPro
 
 public class GameOverPanel : MonoBehaviour
 {
-    public GameObject panel;
-    public Text currentScoreText;
-    public Text bestScoreText;
-    public Button playButton;
-    public Button homeButton;
+    [Header("UI References")]
+    public GameObject panelRoot; // Kéo GameObject "GameOverPanel" vào đây
+    public TextMeshProUGUI scoreText; // Kéo TextMeshPro "ScoreText" con của panel vào
+    public TextMeshProUGUI bestScoreText; // Kéo TextMeshPro "BestScoreText" con của panel vào
 
-    private const string BEST_SCORE_KEY = "BestScore";
+    [Header("Buttons")]
+    public Button restartButton;
+    public Button menuButton;
 
-    void Start()
+    void Awake()
     {
+        // Thêm listener cho các nút bấm
+        restartButton.onClick.AddListener(OnRestart);
+        menuButton.onClick.AddListener(OnGoToMenu);
+
+        // Đăng ký lắng nghe sự kiện từ GameManager
+        GameManager.OnGameOver += ShowPanel;
+
         // Ẩn panel khi bắt đầu
-        if (panel != null)
-        {
-            panel.SetActive(false);
-        }
-
-        // Gán sự kiện cho các button
-        if (playButton != null)
-        {
-            playButton.onClick.AddListener(OnPlayButtonClick);
-        }
-
-        if (homeButton != null)
-        {
-            homeButton.onClick.AddListener(OnHomeButtonClick);
-        }
+        panelRoot.SetActive(false);
     }
 
-    public void ShowGameOver(int currentScore)
+    void OnDestroy()
     {
+        // Hủy đăng ký sự kiện khi đối tượng bị hủy
+        GameManager.OnGameOver -= ShowPanel;
+    }
+
+    private void ShowPanel()
+    {
+        // Lấy điểm số từ ScoreMgr
+        int currentScore = ScoreMgr.Instance.GetScore();
+
+        // Cập nhật Leaderboard
+        LeaderboardMgr.Instance.AddScore("Player", currentScore); // "Player" có thể thay bằng tên người chơi
+
         // Lấy điểm cao nhất
-        int bestScore = PlayerPrefs.GetInt(BEST_SCORE_KEY, 0);
+        int bestScore = LeaderboardMgr.Instance.GetLeaderboard().scores[0].score;
 
-        // Cập nhật điểm cao nhất nếu điểm hiện tại cao hơn
-        if (currentScore > bestScore)
+        // Hiển thị điểm
+        scoreText.text = currentScore.ToString();
+        bestScoreText.text = bestScore.ToString();
+
+        // Hiển thị panel
+        panelRoot.SetActive(true);
+    }
+
+    private void OnRestart()
+    {
+        // Ẩn panel (để tránh nhấp đúp)
+        panelRoot.SetActive(false);
+        
+        // Yêu cầu GameManager tải lại map hiện tại
+        // Đây là cách tải lại map mà vẫn giữ được data-driven
+        if (GameManager.Instance != null && GameManager.Instance.CurrentMapData != null)
         {
-            bestScore = currentScore;
-            PlayerPrefs.SetInt(BEST_SCORE_KEY, bestScore);
-            PlayerPrefs.Save();
+            GameManager.Instance.SelectMap(GameManager.Instance.CurrentMapData);
         }
-
-        // Lưu điểm vừa đạt để xử lý leaderboard sau
-        PlayerPrefs.SetInt("NewScore", currentScore);
-        PlayerPrefs.Save();
-
-        // Hiển thị điểm số
-        if (currentScoreText != null)
-            currentScoreText.text = currentScore.ToString();
-
-        if (bestScoreText != null)
-            bestScoreText.text = bestScore.ToString();
-
-        // Hiển thị panel với animation
-        if (panel != null)
+        else
         {
-            panel.SetActive(true);
-            panel.transform.localScale = Vector3.zero;
-            panel.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
+            // Phòng trường hợp chạy trực tiếp GameScene mà không có GameManager
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 
-    private void OnPlayButtonClick()
+    private void OnGoToMenu()
     {
-        // Reload lại GameScene
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("GameScene");
-    }
-
-    private void OnHomeButtonClick()
-    {
-        // Về StartScene
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("StartScene");
+        // Ẩn panel
+        panelRoot.SetActive(false);
+        
+        // Yêu cầu GameManager tải StartScene
+        GameManager.Instance.LoadStartScene();
     }
 }

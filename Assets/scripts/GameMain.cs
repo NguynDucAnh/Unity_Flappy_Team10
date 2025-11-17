@@ -5,56 +5,56 @@ using UnityEngine.UI;
 
 public class GameMain : MonoBehaviour
 {
-
     public GameObject bird;
     public GameObject readyPic;
     public GameObject tipPic;
-    public GameObject scoreMgr;
-    public GameObject pipeSpawner;
 
+    // ✅ THÊM: Các "vị trí" để tạo asset
+    public Transform backgroundContainer;
+    public Transform landContainer;
 
-    private bool gameStarted = false;
+    // ❌ XÓA: public GameObject scoreMgr;
+    // ❌ XÓA: public GameObject pipeSpawner;
+    // ❌ XÓA: private bool gameStarted = false;
 
-    // Use this for initialization
     void Start()
-    {
+{
+    // Lấy dữ liệu map hiện tại
+    MapData map = GameManager.Instance.CurrentMapData;
 
-    }
+    // 1. Khởi tạo môi trường ĐÚNG
+    if (map.backgroundPrefab != null)
+        Instantiate(map.backgroundPrefab, backgroundContainer);
 
-    // Update is called once per frame
+    if (map.landPrefab != null)
+        Instantiate(map.landPrefab, landContainer);
+
+    // 2. ✅ SỬA LỖI: Chỉ cần set tốc độ cho PipeMove.
+    //    LandControl sẽ tự động đọc tốc độ này.
+    PipeMove.scrollSpeed = map.scrollSpeed;
+
+    // ❌ XÓA DÒNG GÂY LỖI NÀY:
+    // LandControl.speed = map.scrollSpeed;
+
+    // 3. Chuẩn bị bird (tắt trọng lực)
+    bird.GetComponent<Rigidbody2D>().isKinematic = true;
+}
     void Update()
     {
-        if (!gameStarted && Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1"))
         {
-            gameStarted = true;
-            StartGame();
+            // 1. Kích hoạt GameManager
+            GameManager.Instance.StartGame();
+
+            // 2. Ẩn UI
+            readyPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
+            tipPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
+
+            // 3. Hủy script này đi, nó đã xong nhiệm vụ
+            enabled = false;
         }
     }
 
-    private void StartGame()
-    {
-        BirdControl control = bird.GetComponent<BirdControl>();
-        control.inGame = true;
-        control.JumpUp();
-
-        readyPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
-        tipPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
-
-        scoreMgr.GetComponent<ScoreMgr>().SetScore(0);
-        pipeSpawner.GetComponent<PipeSpawner>().StartSpawning();
-    }
-    public void GameOver()
-{
-    // Dừng tạo ống
-    pipeSpawner.GetComponent<PipeSpawner>().GameOver();
-
-    // Lấy điểm hiện tại
-    int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
-
-    // Lưu vào leaderboard
-    LeaderboardMgr.Instance.AddNewScore( finalScore);
-
-    Debug.Log($"Game Over! Final Score = {finalScore}");
-}
-
+    // ❌ XÓA: private void StartGame() {}
+    // ❌ XÓA: public void GameOver() {}
 }

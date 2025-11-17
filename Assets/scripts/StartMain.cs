@@ -1,138 +1,29 @@
 ﻿using UnityEngine;
 using System.Collections;
-using DG.Tweening;
-using UnityEngine.SceneManagement;
+using DG.Tweening; // Giữ lại DOTween cho animation
+using UnityEngine.UI;
 
 public class StartMain : MonoBehaviour
 {
     public GameObject bird;
-    public GameObject land;
-    public GameObject back_ground;
-    public Sprite[] back_list;
+    private Sequence birdSequence;
 
-    [Header("Rating Dialog")]
-    public RatingDialog ratingDialog;
-
-    private GameObject nowPressBtn = null;
-
+    // Use this for initialization
     void Start()
     {
-        // random background
-        int index = Random.Range(0, back_list.Length);
-        if (back_ground != null && back_list != null && back_list.Length > 0)
-        {
-            var sr = back_ground.GetComponent<SpriteRenderer>();
-            if (sr) sr.sprite = back_list[index];
-        }
+        // Logic animation lượn sóng cho chim ở Menu
+        float birdOffset = 0.05f;
+        float birdTime = 0.3f;
+        float birdStartY = bird.transform.position.y;
 
-        // 👇 [SỬA LỖI] Cập nhật logic để tương thích với LeaderboardMgr Singleton
-        if (PlayerPrefs.HasKey("NewScore"))
-        {
-            int score = PlayerPrefs.GetInt("NewScore");
-            
-            // Sử dụng Singleton Instance thay vì FindObjectOfType
-            if (LeaderboardMgr.Instance != null)
-            {
-                // [SỬA LỖI 1] Dùng AddScore(name, score) thay vì AddNewScore(score)
-                // Tạm thời dùng "Player" làm tên mặc định
-                LeaderboardMgr.Instance.AddScore("Player", score);
+        birdSequence = DOTween.Sequence();
 
-                // [SỬA LỖI 2] Gọi ForceUpdate() trên đối tượng UI
-                if (LeaderboardMgr.Instance.ui != null)
-                {
-                    LeaderboardMgr.Instance.ui.ForceUpdate();
-                }
-            }
-            PlayerPrefs.DeleteKey("NewScore");
-        }
+        birdSequence.Append(bird.transform.DOMoveY(birdStartY + birdOffset, birdTime).SetEase(Ease.Linear))
+            .Append(bird.transform.DOMoveY(birdStartY - 2 * birdOffset, 2 * birdTime).SetEase(Ease.Linear))
+            .Append(bird.transform.DOMoveY(birdStartY, birdTime).SetEase(Ease.Linear))
+            .SetLoops(-1);
     }
 
-
-    void Update()
-    {
-        // Touch
-        foreach (Touch touch in Input.touches)
-            HandleTouch(touch.fingerId, touch.position, touch.phase);
-
-        // Mouse giả lập touch
-        if (Input.touchCount == 0)
-        {
-            if (Input.GetMouseButtonDown(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Began);
-            if (Input.GetMouseButton(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Moved);
-            if (Input.GetMouseButtonUp(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Ended);
-        }
-    }
-
-    private void HandleTouch(int touchFingerId, Vector2 touchPosition, TouchPhase touchPhase)
-    {
-        Vector3 wp = Camera.main.ScreenToWorldPoint(touchPosition);
-        Vector2 worldPos = new Vector2(wp.x, wp.y);
-
-        switch (touchPhase)
-        {
-            case TouchPhase.Began:
-                foreach (Collider2D c in Physics2D.OverlapPointAll(worldPos))
-                {
-                    string n = c.gameObject.name;
-                    if (n == "start_btn" || n == "rank_btn" || n == "rate_btn")
-                    {
-                        c.transform.DOMoveY(c.transform.position.y - 0.03f, 0f);
-                        nowPressBtn = c.gameObject;
-                    }
-                }
-                break;
-
-            case TouchPhase.Ended:
-                if (nowPressBtn)
-                {
-                    nowPressBtn.transform.DOMoveY(nowPressBtn.transform.position.y + 0.03f, 0f);
-
-                    foreach (Collider2D c in Physics2D.OverlapPointAll(worldPos))
-                    {
-                        if (c.gameObject.name == nowPressBtn.name)
-                        {
-                            if (nowPressBtn.name == "start_btn")
-                                OnPressStart();
-                            else if (nowPressBtn.name == "rate_btn")
-                                OnPressRate();
-                            else if (nowPressBtn.name == "rank_btn")
-                                OnPressRank();   // 👈 thêm dòng này
-
-                        }
-                    }
-                    nowPressBtn = null;
-                }
-                break;
-        }
-    }
-
-    private void OnPressStart()
-    {
-        SceneManager.LoadScene("GameScene");
-    }
-    private void OnPressRank()
-    {
-        // [SỬA LỖI] Dùng LeaderboardMgr.Instance
-        if (LeaderboardMgr.Instance != null)
-        {
-            LeaderboardMgr.Instance.ShowLeaderboard();
-        }
-        else
-        {
-            Debug.LogWarning("LeaderboardMgr not found in scene!");
-        }
-    }
-
-
-    private void OnPressRate()
-    {
-        if (ratingDialog != null)
-        {
-            ratingDialog.ShowDialog();
-        }
-        else
-        {
-            Debug.LogWarning("RatingDialog is not assigned!");
-        }
-    }
+    // ❌ TOÀN BỘ logic Update() và GameOver() cũ đã được XÓA
+    // vì chúng không thuộc về StartScene
 }
