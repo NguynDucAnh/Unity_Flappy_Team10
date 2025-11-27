@@ -1,32 +1,29 @@
 using UnityEngine;
-using TMPro; // Đảm bảo bạn đang dùng TextMeshPro
+using TMPro;
 using System.Collections.Generic;
 
 public class LeaderboardUI : MonoBehaviour
 {
-    public List<TextMeshProUGUI> nameTexts;
-    public List<TextMeshProUGUI> scoreTexts;
+    [SerializeField] private List<TextMeshProUGUI> nameTexts;
+    [SerializeField] private List<TextMeshProUGUI> scoreTexts;
 
-    void OnEnable()
-    {
-        ForceUpdate();
-    }
+    void OnEnable(){ ForceUpdate(); }
 
     public void ForceUpdate()
     {
-        var lb = LeaderboardMgr.Instance.GetLeaderboard();
-
-        for (int i = 0; i < nameTexts.Count; i++)
+        var b = LeaderboardMgr.Instance.GetLeaderboard();
+        int n = Mathf.Min(nameTexts.Count, scoreTexts.Count);
+        for (int i = 0; i < n; i++)
         {
-            if (i < lb.scores.Count)
+            if (i < b.scores.Count)
             {
-                nameTexts[i].text = lb.scores[i].name;
-                scoreTexts[i].text = lb.scores[i].score.ToString();
+                nameTexts[i].text = b.scores[i].name;
+                scoreTexts[i].text = b.scores[i].score.ToString();
             }
             else
             {
                 nameTexts[i].text = "---";
-                scoreTexts[i].text = "---";
+                scoreTexts[i].text = "0";
             }
         }
     }

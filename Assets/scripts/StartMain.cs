@@ -1,29 +1,18 @@
-﻿using UnityEngine;
-using System.Collections;
-using DG.Tweening; // Giữ lại DOTween cho animation
-using UnityEngine.UI;
+using UnityEngine;
 
 public class StartMain : MonoBehaviour
 {
-    public GameObject bird;
-    private Sequence birdSequence;
+    [SerializeField] private Transform bird;
+    [SerializeField] private float amplitude = 0.1f;
+    [SerializeField] private float frequency = 1.5f;
+    private Vector3 startPos;
 
-    // Use this for initialization
-    void Start()
+    void Start(){ if (bird) startPos = bird.position; }
+
+    void Update()
     {
-        // Logic animation lượn sóng cho chim ở Menu
-        float birdOffset = 0.05f;
-        float birdTime = 0.3f;
-        float birdStartY = bird.transform.position.y;
-
-        birdSequence = DOTween.Sequence();
-
-        birdSequence.Append(bird.transform.DOMoveY(birdStartY + birdOffset, birdTime).SetEase(Ease.Linear))
-            .Append(bird.transform.DOMoveY(birdStartY - 2 * birdOffset, 2 * birdTime).SetEase(Ease.Linear))
-            .Append(bird.transform.DOMoveY(birdStartY, birdTime).SetEase(Ease.Linear))
-            .SetLoops(-1);
+        if (!bird) return;
+        float y = Mathf.Sin(Time.time * frequency) * amplitude;
+        bird.position = startPos + new Vector3(0, y, 0);
     }
-
-    // ❌ TOÀN BỘ logic Update() và GameOver() cũ đã được XÓA
-    // vì chúng không thuộc về StartScene
 }

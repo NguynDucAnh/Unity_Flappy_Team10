@@ -1,98 +1,43 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 public class LeaderboardMgr : MonoBehaviour
 {
-    private static LeaderboardMgr _instance;
-    public static LeaderboardMgr Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindObjectOfType<LeaderboardMgr>();
-                if (_instance == null)
-                {
-                    GameObject go = new GameObject("LeaderboardMgr");
-                    _instance = go.AddComponent<LeaderboardMgr>();
-                    DontDestroyOnLoad(go);
-                }
-            }
-            return _instance;
-        }
-    }
+    public static LeaderboardMgr Instance { get; private set; }
 
-    private LeaderboardData leaderboard;
-    private const string LEADERBOARD_KEY = "FlappyLeaderboard";
+    [System.Serializable] public class Entry { public string name; public int score; }
+    [System.Serializable] public class Board { public List<Entry> scores = new List<Entry>(); }
+
+    private Board board = new Board();
+    private const string KEY = "LEADERBOARD_JSON";
 
     void Awake()
     {
-        if (_instance == null)
-        {
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadLeaderboard();
-        }
-        else if (_instance != this)
-        {
-            Destroy(gameObject);
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        LoadLeaderboard();
+    }
+
+    public Board GetLeaderboard() => board;
+
+    public void AddScore(string name, int score)
+    {
+        board.scores.Add(new Entry { name = name, score = score });
+        board.scores.Sort((a, b) => b.score.CompareTo(a.score));
+        if (board.scores.Count > 10) board.scores.RemoveRange(10, board.scores.Count - 10);
+        SaveLeaderboard();
     }
 
     private void LoadLeaderboard()
     {
-        string json = PlayerPrefs.GetString(LEADERBOARD_KEY, "{}");
-        leaderboard = JsonUtility.FromJson<LeaderboardData>(json);
-        if (leaderboard == null || leaderboard.scores == null)
-        {
-            leaderboard = new LeaderboardData();
-            leaderboard.scores = new List<LeaderboardEntry>();
-        }
-        SortLeaderboard();
+        var json = PlayerPrefs.GetString(KEY, "");
+        if (!string.IsNullOrEmpty(json)) board = JsonUtility.FromJson<Board>(json);
+        if (board == null) board = new Board();
     }
-
     private void SaveLeaderboard()
     {
-        SortLeaderboard();
-        // Chỉ giữ 10 điểm cao nhất
-        if (leaderboard.scores.Count > 10)
-        {
-            leaderboard.scores = leaderboard.scores.GetRange(0, 10);
-        }
-        string json = JsonUtility.ToJson(leaderboard);
-        PlayerPrefs.SetString(LEADERBOARD_KEY, json);
+        PlayerPrefs.SetString(KEY, JsonUtility.ToJson(board));
         PlayerPrefs.Save();
     }
-
-    public void AddScore(string playerName, int score)
-    {
-        if (score <= 0) return; // Không lưu điểm 0
-
-        leaderboard.scores.Add(new LeaderboardEntry { name = playerName, score = score });
-        SaveLeaderboard();
-    }
-
-    public LeaderboardData GetLeaderboard()
-    {
-        return leaderboard;
-    }
-
-    private void SortLeaderboard()
-    {
-        leaderboard.scores = leaderboard.scores.OrderByDescending(s => s.score).ToList();
-    }
-}
-
-[System.Serializable]
-public class LeaderboardData
-{
-    public List<LeaderboardEntry> scores;
-}
-
-[System.Serializable]
-public class LeaderboardEntry
-{
-    public string name;
-    public int score;
 }

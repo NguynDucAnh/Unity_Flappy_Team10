@@ -1,60 +1,40 @@
-﻿using UnityEngine;
-using System.Collections;
-using DG.Tweening;
-using UnityEngine.UI;
+using UnityEngine;
 
 public class GameMain : MonoBehaviour
 {
-    public GameObject bird;
-    public GameObject readyPic;
-    public GameObject tipPic;
+    [Header("Start overlay")]
+    [SerializeField] private GameObject ready_pic;
+    [SerializeField] private GameObject tip_pic;
 
-    // ✅ THÊM: Các "vị trí" để tạo asset
-    public Transform backgroundContainer;
-    public Transform landContainer;
+    [Header("References")]
+    [SerializeField] private Rigidbody2D bird;
 
-    // ❌ XÓA: public GameObject scoreMgr;
-    // ❌ XÓA: public GameObject pipeSpawner;
-    // ❌ XÓA: private bool gameStarted = false;
+    [Header("Gameplay")]
+    [SerializeField] private float scrollSpeed = 2.5f;
+
+    private bool clickedToStart = false;
 
     void Start()
-{
-    // Lấy dữ liệu map hiện tại
-    MapData map = GameManager.Instance.CurrentMapData;
+    {
+        PipeMove.scrollSpeed = 0f; // wait for first tap
+        if (bird) bird.isKinematic = true;
+    }
 
-    // 1. Khởi tạo môi trường ĐÚNG
-    if (map.backgroundPrefab != null)
-        Instantiate(map.backgroundPrefab, backgroundContainer);
-
-    if (map.landPrefab != null)
-        Instantiate(map.landPrefab, landContainer);
-
-    // 2. ✅ SỬA LỖI: Chỉ cần set tốc độ cho PipeMove.
-    //    LandControl sẽ tự động đọc tốc độ này.
-    PipeMove.scrollSpeed = map.scrollSpeed;
-
-    // ❌ XÓA DÒNG GÂY LỖI NÀY:
-    // LandControl.speed = map.scrollSpeed;
-
-    // 3. Chuẩn bị bird (tắt trọng lực)
-    bird.GetComponent<Rigidbody2D>().isKinematic = true;
-}
     void Update()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (!clickedToStart && Input.GetMouseButtonDown(0))
         {
-            // 1. Kích hoạt GameManager
-            GameManager.Instance.StartGame();
-
-            // 2. Ẩn UI
-            readyPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
-            tipPic.GetComponent<SpriteRenderer>().material.DOFade(0f, 0.2f);
-
-            // 3. Hủy script này đi, nó đã xong nhiệm vụ
-            enabled = false;
+            clickedToStart = true;
+            BeginGame();
         }
     }
 
-    // ❌ XÓA: private void StartGame() {}
-    // ❌ XÓA: public void GameOver() {}
+    private void BeginGame()
+    {
+        PipeMove.scrollSpeed = Mathf.Max(0.1f, scrollSpeed);
+        if (bird) bird.isKinematic = false;
+        if (ready_pic) ready_pic.SetActive(false);
+        if (tip_pic) tip_pic.SetActive(false);
+        GameManager.Instance.StartGame();
+    }
 }

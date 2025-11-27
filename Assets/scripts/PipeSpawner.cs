@@ -1,47 +1,56 @@
-﻿using UnityEngine;
-using System.Collections;
+using UnityEngine;
 
-public class PipeSpawner : MonoBehaviour {
+public class PipeSpawner : MonoBehaviour
+{
+    [Header("Setup")]
+    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private GameObject pipePrefab;
 
-    public float spawnDelay = 3f;		
-    public float[] heights;
+    [Header("Timing")]
+    [SerializeField] private float spawnDelay = 1f;
+    [SerializeField] private float spawnInterval = 1.5f;
 
-    // ❌ XÓA: public GameObject pipe;	
-    // ❌ XÓA: public float spawnTime = 5f;
-    private MapData currentMap;
+    [Header("Heights (Y)")]
+    [SerializeField] private float[] heights = new float[] { -1f, -0.5f, 0f, 0.5f, 1f };
 
-    void Awake()
+    private bool spawning = false;
+
+    void OnEnable()
     {
-        // Lấy dữ liệu map và đăng ký sự kiện
-        currentMap = GameManager.Instance.CurrentMapData;
         GameManager.OnGameStarted += StartSpawning;
         GameManager.OnGameOver += StopSpawning;
     }
-
-    void OnDestroy()
+    void OnDisable()
     {
-        // Hủy đăng ký sự kiện để tránh lỗi
         GameManager.OnGameStarted -= StartSpawning;
         GameManager.OnGameOver -= StopSpawning;
     }
 
-    public void StartSpawning()
+    void Start()
     {
-        // Dùng spawn rate từ MapData
-        InvokeRepeating("Spawn", spawnDelay, currentMap.pipeSpawnRate);
+        if (!spawnPoint) spawnPoint = transform;
     }
 
-    void Spawn ()
+    private void StartSpawning()
     {
-        int heightIndex = Random.Range(0, heights.Length);
-        Vector2 pos = new Vector2(transform.position.x, heights[heightIndex]);
-
-        // ✅ TẠO ĐÚNG ỐNG NƯỚC:
-        Instantiate(currentMap.pipePrefab, pos, transform.rotation);
+        if (spawning) return;
+        if (!pipePrefab) { Debug.LogError("[PipeSpawner] pipePrefab missing."); return; }
+        if (heights == null || heights.Length == 0) { Debug.LogError("[PipeSpawner] heights empty"); return; }
+        spawning = true;
+        InvokeRepeating(nameof(Spawn), spawnDelay, Mathf.Max(0.1f, spawnInterval));
     }
 
-    public void StopSpawning() // Đổi tên từ GameOver()
+    private void StopSpawning()
     {
-        CancelInvoke("Spawn");
+        spawning = false;
+        CancelInvoke(nameof(Spawn));
+    }
+
+    private void Spawn()
+    {
+        int i = Random.Range(0, heights.Length);
+        Vector3 pos = spawnPoint.position;
+        pos.y = heights[i];
+        Instantiate(pipePrefab, pos, Quaternion.identity);
     }
 }

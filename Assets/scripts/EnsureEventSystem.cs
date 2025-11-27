@@ -1,15 +1,15 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+[DefaultExecutionOrder(-1000)]
 public class EnsureEventSystem : MonoBehaviour
 {
     void Awake()
     {
         if (FindObjectOfType<EventSystem>() == null)
         {
-            GameObject eventSystem = new GameObject("EventSystem");
-            eventSystem.AddComponent<EventSystem>();
-            eventSystem.AddComponent<StandaloneInputModule>();
+            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            DontDestroyOnLoad(go);
         }
     }
 }

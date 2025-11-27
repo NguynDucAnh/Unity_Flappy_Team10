@@ -1,54 +1,32 @@
-﻿using UnityEngine;
-using System.Collections;
+using UnityEngine;
 
-public class LandControl : MonoBehaviour {
+public class LandControl : MonoBehaviour
+{
+    [SerializeField] private float startX = 10f;
+    [SerializeField] private float endX = -10f;
 
-    // ❌ Xóa biến 'speed' cũ: public float speed = 5f;
-    
-    // Các biến này vẫn cần thiết để lặp lại mặt đất
-    public float startX;
-    public float endX;
+    private bool moving = false;
+    private System.Action onStart, onOver;
 
-    private bool inGame = false;
-
-    void Awake()
+    void OnEnable()
     {
-        // Lắng nghe GameManager thông báo
-        GameManager.OnGameStarted += OnGameStarted;
-        GameManager.OnGameOver += OnGameOver;
+        onStart = () => moving = true;
+        onOver = () => moving = false;
+        GameManager.OnGameStarted += onStart;
+        GameManager.OnGameOver += onOver;
     }
 
-    void OnDestroy()
+    void OnDisable()
     {
-        // Hủy đăng ký
-        GameManager.OnGameStarted -= OnGameStarted;
-        GameManager.OnGameOver -= OnGameOver;
+        GameManager.OnGameStarted -= onStart;
+        GameManager.OnGameOver -= onOver;
     }
 
-    private void OnGameStarted()
+    void Update()
     {
-        inGame = true;
-    }
-
-    private void OnGameOver()
-    {
-        inGame = false;
-    }
-    
-    void Update () 
-    {
-        // Chỉ di chuyển khi game đang chạy
-        if (!inGame) return; 
-
-        // ✅ Quan trọng: Dùng biến static 'scrollSpeed' TỪ SCRIPT 'PipeMove'
-        // Điều này đảm bảo mặt đất và ống luôn di chuyển CÙNG tốc độ
-        transform.Translate(Vector2.left * PipeMove.scrollSpeed * Time.deltaTime);
-
-        if (transform.position.x < endX)
-        {
+        if (!moving) return;
+        transform.position += Vector3.left * (PipeMove.scrollSpeed * Time.deltaTime);
+        if (transform.position.x <= endX)
             transform.position = new Vector3(startX, transform.position.y, transform.position.z);
-        }
     }
-
-    // ❌ Xóa hàm GameOver() cũ, vì giờ chúng ta dùng Event 'OnGameOver'
 }
