@@ -10,6 +10,9 @@ public class StartMain : MonoBehaviour
     public GameObject back_ground;
     public Sprite[] back_list;
 
+    [Header("Rating Dialog")]
+    public RatingDialog ratingDialog;
+
     private GameObject nowPressBtn = null;
 
     void Start()
@@ -21,8 +24,21 @@ public class StartMain : MonoBehaviour
             var sr = back_ground.GetComponent<SpriteRenderer>();
             if (sr) sr.sprite = back_list[index];
         }
-           FindObjectOfType<LeaderboardUI>()?.UpdateLeaderboardUI();
+
+        // 👇 Thêm đoạn này
+        if (PlayerPrefs.HasKey("NewScore"))
+        {
+            int score = PlayerPrefs.GetInt("NewScore");
+            LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
+            if (lb != null)
+            {
+                lb.AddNewScore(score);
+                lb.UpdateLeaderboardUI();
+            }
+            PlayerPrefs.DeleteKey("NewScore");
+        }
     }
+
 
     void Update()
     {
@@ -34,8 +50,8 @@ public class StartMain : MonoBehaviour
         if (Input.touchCount == 0)
         {
             if (Input.GetMouseButtonDown(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Began);
-            if (Input.GetMouseButton(0))     HandleTouch(10, Input.mousePosition, TouchPhase.Moved);
-            if (Input.GetMouseButtonUp(0))   HandleTouch(10, Input.mousePosition, TouchPhase.Ended);
+            if (Input.GetMouseButton(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Moved);
+            if (Input.GetMouseButtonUp(0)) HandleTouch(10, Input.mousePosition, TouchPhase.Ended);
         }
     }
 
@@ -69,6 +85,11 @@ public class StartMain : MonoBehaviour
                         {
                             if (nowPressBtn.name == "start_btn")
                                 OnPressStart();
+                            else if (nowPressBtn.name == "rate_btn")
+                                OnPressRate();
+                            else if (nowPressBtn.name == "rank_btn")
+                                OnPressRank();   // 👈 thêm dòng này
+
                         }
                     }
                     nowPressBtn = null;
@@ -79,9 +100,31 @@ public class StartMain : MonoBehaviour
 
     private void OnPressStart()
     {
-        
         SceneManager.LoadScene("GameScene");
+    }
+    private void OnPressRank()
+    {
+        LeaderboardMgr lb = FindObjectOfType<LeaderboardMgr>();
+        if (lb != null)
+        {
+            lb.ShowLeaderboard();
+        }
+        else
+        {
+            Debug.LogWarning("LeaderboardMgr not found in scene!");
+        }
+    }
 
-        
+
+    private void OnPressRate()
+    {
+        if (ratingDialog != null)
+        {
+            ratingDialog.ShowDialog();
+        }
+        else
+        {
+            Debug.LogWarning("RatingDialog is not assigned!");
+        }
     }
 }
