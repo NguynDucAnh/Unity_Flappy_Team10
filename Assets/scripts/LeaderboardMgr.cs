@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public class LeaderboardMgr : MonoBehaviour
 {
-        public static LeaderboardMgr Instance;
-public List<(string playerName, int score)> leaderboard = new List<(string playerName, int score)>();
+    public static LeaderboardMgr Instance;
+    public List<(string playerName, int score)> leaderboard = new List<(string playerName, int score)>();
 
     public GameObject leaderboardPanel;
     public Text[] scoreTexts; // 5 dòng text
