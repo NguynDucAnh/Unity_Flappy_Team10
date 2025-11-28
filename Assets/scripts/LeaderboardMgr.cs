@@ -65,14 +65,15 @@ public class LeaderboardMgr : MonoBehaviour
         }
     }
 
-    public void UpdateLeaderboardUI()
+   public void UpdateLeaderboardUI()
+{
+    for (int i = 0; i < scoreTexts.Length; i++)
     {
-        for (int i = 0; i < scoreTexts.Length; i++)
-        {
-            if (i < topScores.Count)
-                scoreTexts[i].text = $"{i + 1}. {topScores[i]}";
-            else
-                scoreTexts[i].text = $"{i + 1}. ---";
-        }
+        if (i < topScores.Count)
+            scoreTexts[i].text = topScores[i].ToString(); // chỉ hiện điểm
+        else
+            scoreTexts[i].text = "---";
     }
+}
+
 }

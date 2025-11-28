@@ -76,7 +76,6 @@ public class RatingDialog : MonoBehaviour
         if (hasRated)
         {
             Debug.Log("User has already rated");
-            return;
         }
 
         if (dialogPanel != null)
