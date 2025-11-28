@@ -4,14 +4,9 @@ using System.Collections.Generic;
 
 public class LeaderboardMgr : MonoBehaviour
 {
-    // Singleton
-    public static LeaderboardMgr Instance { get; private set; }
+    public static LeaderboardMgr Instance;
+    public List<(string playerName, int score)> leaderboard = new List<(string playerName, int score)>();
 
-    [Header("Cấu hình")]
-    public int maxEntries = 10;
-    private const string PREF_KEY = "LeaderboardData";
-
-    [Header("UI (Tự gán hoặc kéo thả)")]
     public GameObject leaderboardPanel;
     public LeaderboardUI ui;
 
@@ -46,7 +41,7 @@ public class LeaderboardMgr : MonoBehaviour
     {
         if (leaderboardPanel != null)
             leaderboardPanel.SetActive(true);
-        
+
         if (ui != null)
             ui.ForceUpdate();
         else
@@ -62,7 +57,7 @@ public class LeaderboardMgr : MonoBehaviour
     public void AddScore(string playerName, int score)
     {
         leaderboard.Add(new LeaderboardEntry(playerName, score));
-        
+
         // Sắp xếp giảm dần theo điểm
         leaderboard.Sort((a, b) => b.score.CompareTo(a.score));
 
@@ -71,7 +66,7 @@ public class LeaderboardMgr : MonoBehaviour
             leaderboard = leaderboard.GetRange(0, maxEntries);
 
         SaveLeaderboard();
-        
+
         // Cập nhật UI nếu nó đang mở
         if (ui != null && leaderboardPanel.activeSelf)
             ui.ForceUpdate();
