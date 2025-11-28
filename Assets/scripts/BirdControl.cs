@@ -4,12 +4,11 @@ using DG.Tweening;
 
 public class BirdControl : MonoBehaviour
 {
-
     public int rotateRate = 3;
     public float upSpeed = 10;
     public GameObject scoreMgr;
     public GameObject gameOverPanel;
-
+    public float maxY = 5.2f;
     public AudioClip jumpUp;
     public AudioClip hit;
     public AudioClip score;
@@ -21,9 +20,14 @@ public class BirdControl : MonoBehaviour
 
     private Sequence birdSequence;
 
+    private Rigidbody2D rb;
+
     // Use this for initialization
     void Start()
     {
+        // Lấy component Rigidbody2D một lần duy nhất lúc đầu
+        rb = GetComponent<Rigidbody2D>();
+
         float birdOffset = 0.05f;
         float birdTime = 0.3f;
         float birdStartY = transform.position.y;
@@ -47,6 +51,19 @@ public class BirdControl : MonoBehaviour
 
         if (!dead)
         {
+            // Fix bird fly out of screen
+            if (transform.position.y > maxY)
+            {
+                // Force the bird to lie on the ceiling, do not let it go higher
+                transform.position = new Vector3(transform.position.x, maxY, transform.position.z);
+
+                // If the bird is in flight, kill it immediately and let it fall naturally.
+                if (rb.velocity.y > 0)
+                {
+                    rb.velocity = new Vector2(rb.velocity.x, 0);
+                }
+            }
+
             if (Input.GetButtonDown("Fire1"))
             {
                 JumpUp();
@@ -55,17 +72,14 @@ public class BirdControl : MonoBehaviour
 
         if (!landed)
         {
-            float v = transform.GetComponent<Rigidbody2D>().velocity.y;
-
+            // Dùng biến rb đã cache
+            float v = rb.velocity.y;
             float rotate = Mathf.Clamp(v * 2f, -45f, 10f);
-
-
-
             transform.rotation = Quaternion.Euler(0f, 0f, rotate);
         }
         else
         {
-            transform.GetComponent<Rigidbody2D>().rotation = -90;
+            rb.rotation = -90;
         }
     }
 
@@ -93,8 +107,8 @@ public class BirdControl : MonoBehaviour
 
             if (other.name == "land")
             {
-                transform.GetComponent<Rigidbody2D>().gravityScale = 0;
-                transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
+                rb.gravityScale = 0;
+                rb.velocity = new Vector2(0, 0);
                 landed = true;
             }
         }
@@ -110,24 +124,22 @@ public class BirdControl : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
 
-
         if (gameOverPanel != null)
         {
             int currentScore = scoreMgr.GetComponent<ScoreMgr>().GetCurrentScore();
             gameOverPanel.GetComponent<GameOverPanel>().ShowGameOver(currentScore);
         }
-
     }
 
     public void JumpUp()
     {
-        transform.GetComponent<Rigidbody2D>().velocity = new Vector2(0, upSpeed);
+        // Dùng rb đã cache
+        rb.velocity = new Vector2(0, upSpeed);
         AudioSource.PlayClipAtPoint(jumpUp, Vector3.zero);
     }
 
     public void GameOver()
     {
-
         if (!dead)
         {
             dead = true;
@@ -141,7 +153,7 @@ public class BirdControl : MonoBehaviour
                 return;
             }
 
-     LeaderboardMgr.Instance.AddNewScore(finalScore);
+            LeaderboardMgr.Instance.AddNewScore(finalScore);
 
             Debug.Log("✅ Score added to Leaderboard!");
 
@@ -152,9 +164,6 @@ public class BirdControl : MonoBehaviour
                 ui.ForceUpdate();
                 Debug.Log("📋 Leaderboard UI refreshed!");
             }
-
         }
-
-
     }
 }
