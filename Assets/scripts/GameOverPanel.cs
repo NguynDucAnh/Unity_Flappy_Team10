@@ -1,82 +1,42 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using DG.Tweening;
+using UnityEngine.UI;
 
 public class GameOverPanel : MonoBehaviour
 {
-    public GameObject panel;
-    public Text currentScoreText;
-    public Text bestScoreText;
-    public Button playButton;
-    public Button homeButton;
-
-    private const string BEST_SCORE_KEY = "BestScore";
+    public GameObject panelRoot;
+    public Text scoreText;
+    public Text bestText;
 
     void Start()
     {
-        // Ẩn panel khi bắt đầu
-        if (panel != null)
-        {
-            panel.SetActive(false);
-        }
-
-        // Gán sự kiện cho các button
-        if (playButton != null)
-        {
-            playButton.onClick.AddListener(OnPlayButtonClick);
-        }
-
-        if (homeButton != null)
-        {
-            homeButton.onClick.AddListener(OnHomeButtonClick);
-        }
+        if(panelRoot != null) panelRoot.SetActive(false);
     }
 
-    public void ShowGameOver(int currentScore)
+    public void ShowGameOver(int score)
     {
-        // Lấy điểm cao nhất
-        int bestScore = PlayerPrefs.GetInt(BEST_SCORE_KEY, 0);
-
-        // Cập nhật điểm cao nhất nếu điểm hiện tại cao hơn
-        if (currentScore > bestScore)
+        if(panelRoot != null) panelRoot.SetActive(true);
+        
+        if(scoreText != null) scoreText.text = score.ToString();
+        
+        // Lấy best score (đơn giản hóa để chạy được ngay)
+        int best = PlayerPrefs.GetInt("BestScore", 0);
+        if(score > best)
         {
-            bestScore = currentScore;
-            PlayerPrefs.SetInt(BEST_SCORE_KEY, bestScore);
-            PlayerPrefs.Save();
+            best = score;
+            PlayerPrefs.SetInt("BestScore", best);
         }
-
-        // Lưu điểm vừa đạt để xử lý leaderboard sau
-        PlayerPrefs.SetInt("NewScore", currentScore);
-        PlayerPrefs.Save();
-
-        // Hiển thị điểm số
-        if (currentScoreText != null)
-            currentScoreText.text = currentScore.ToString();
-
-        if (bestScoreText != null)
-            bestScoreText.text = bestScore.ToString();
-
-        // Hiển thị panel với animation
-        if (panel != null)
-        {
-            panel.SetActive(true);
-            panel.transform.localScale = Vector3.zero;
-            panel.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
-        }
+        if(bestText != null) bestText.text = best.ToString();
     }
 
-    private void OnPlayButtonClick()
+    public void OnRestartClick()
     {
-        // Reload lại GameScene
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("GameScene");
+        // Load lại chính Scene hiện tại
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void OnHomeButtonClick()
+    public void OnMenuClick()
     {
-        // Về StartScene
-        Time.timeScale = 1f;
         SceneManager.LoadScene("StartScene");
     }
 }
