@@ -147,13 +147,13 @@ public class BirdControl : MonoBehaviour
             int finalScore = scoreMgr.GetComponent<ScoreMgr>().GetScore();
             Debug.Log($"Game Over! Final Score = {finalScore}");
 
-            // if (LeaderboardMgr.Instance == null)
-            // {
-            //     Debug.LogError("❌ LeaderboardMgr.Instance is NULL — chưa có trong Scene hoặc bị Destroy!");
-            //     return;
-            // }
+            if (LeaderboardMgr.Instance == null)
+            {
+                Debug.LogError("❌ LeaderboardMgr.Instance is NULL — chưa có trong Scene hoặc bị Destroy!");
+                return;
+            }
 
-            // LeaderboardMgr.Instance.AddScore(finalScore);
+            LeaderboardMgr.Instance.AddScore(finalScore);
 
             Debug.Log("✅ Score added to Leaderboard!");
 
