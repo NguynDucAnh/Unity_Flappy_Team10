@@ -34,39 +34,40 @@ public class LeaderboardUI : MonoBehaviour
         UpdateLeaderboardUI();
     }
 
-    public void UpdateLeaderboardUI()
+   public void UpdateLeaderboardUI()
+{
+    if (LeaderboardMgr.Instance == null)
     {
-        if (LeaderboardMgr.Instance == null)
-        {
-            Debug.LogWarning("⚠️ LeaderboardMgr chưa được khởi tạo!");
-            return;
-        }
-
-        var data = LeaderboardMgr.Instance.leaderboard;
-        if (data == null)
-        {
-            Debug.LogWarning("⚠️ Leaderboard data null!");
-            return;
-        }
-
-        int length = Mathf.Min(playerTexts.Length, scoreTexts.Length);
-
-        for (int i = 0; i < length; i++)
-        {
-            if (i < data.Count)
-            {
-                playerTexts[i].text = data[i].playerName;
-                scoreTexts[i].text = data[i].score.ToString();
-            }
-            else
-            {
-                playerTexts[i].text = "-";
-                scoreTexts[i].text = "0";
-            }
-        }
-
-        Debug.Log($"✅ Leaderboard UI updated ({data.Count} entries)");
+        Debug.LogWarning("⚠️ LeaderboardMgr chưa được khởi tạo!");
+        return;
     }
+
+    var data = LeaderboardMgr.Instance.TopScores; // chỉ khai báo 1 lần
+
+    if (data == null)
+    {
+        Debug.LogWarning("⚠️ Leaderboard data null!");
+        return;
+    }
+
+    int length = Mathf.Min(playerTexts.Length, scoreTexts.Length);
+    // Không khai báo lại, dùng data đã có
+    for (int i = 0; i < length; i++)
+    {
+        if (i < data.Count)
+        {
+            playerTexts[i].text = "Player";
+            scoreTexts[i].text = data[i].ToString();
+        }
+        else
+        {
+            playerTexts[i].text = "Player";
+            scoreTexts[i].text = "0";
+        }
+    }
+
+    Debug.Log($"✅ Leaderboard UI updated ({data.Count} entries)");
+}
 
     public void ForceUpdate()
     {
