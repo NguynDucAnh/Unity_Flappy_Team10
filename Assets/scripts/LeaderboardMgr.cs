@@ -1,46 +1,70 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Linq; 
 
 public class LeaderboardMgr : MonoBehaviour
 {
     public static LeaderboardMgr Instance;
-    public List<(string playerName, int score)> leaderboard = new List<(string playerName, int score)>();
+    
+    [Header("Cài đặt UI")]
+    public GameObject leaderboardPanel; // Kéo Panel Rank vào đây
+    public Text[] scoreTexts; // Kéo 5 text điểm vào đây (nếu dùng Text thường)
 
-    public GameObject leaderboardPanel;
-    public Text[] scoreTexts; // 5 dòng text
     private List<int> topScores = new List<int>();
-    private const string PREF_KEY = "TopScores";
+    private const string PREF_KEY = "Flappy_BestScores";
 
-    void Start()
+    void Awake()
     {
-        LoadScores();
-        UpdateLeaderboardUI();
-        leaderboardPanel.SetActive(false);
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // Giữ script này sống qua các scene
+            LoadScores();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void ShowLeaderboard()
     {
-        LoadScores();
-        UpdateLeaderboardUI();
-        leaderboardPanel.SetActive(true);
+        if (leaderboardPanel != null)
+        {
+            leaderboardPanel.SetActive(true);
+            UpdateUI();
+        }
     }
 
     public void HideLeaderboard()
     {
-        leaderboardPanel.SetActive(false);
+        if (leaderboardPanel != null) leaderboardPanel.SetActive(false);
     }
 
-    public void AddNewScore(int newScore)
+    // Hàm thêm điểm mới (Sửa lỗi CS1061)
+    public void AddScore(int newScore)
     {
+        if (newScore <= 0) return;
+
         LoadScores();
         topScores.Add(newScore);
-        topScores.Sort((a, b) => b.CompareTo(a)); // Sắp xếp giảm dần
+        
+        // Sắp xếp giảm dần (điểm cao nhất lên đầu)
+        topScores = topScores.OrderByDescending(x => x).ToList();
 
+        // Chỉ giữ top 5
         if (topScores.Count > 5)
-            topScores = topScores.GetRange(0, 5);
+            topScores = topScores.Take(5).ToList();
 
         SaveScores();
+        UpdateUI();
+    }
+
+    // Hàm hỗ trợ gọi từ các script cũ
+    public void AddScore(string playerName, int score)
+    {
+        AddScore(score);
     }
 
     private void SaveScores()
@@ -65,15 +89,19 @@ public class LeaderboardMgr : MonoBehaviour
         }
     }
 
-   public void UpdateLeaderboardUI()
-{
-    for (int i = 0; i < scoreTexts.Length; i++)
+    private void UpdateUI()
     {
-        if (i < topScores.Count)
-            scoreTexts[i].text = topScores[i].ToString(); // chỉ hiện điểm
-        else
-            scoreTexts[i].text = "---";
-    }
-}
+        if (scoreTexts == null) return;
 
+        for (int i = 0; i < scoreTexts.Length; i++)
+        {
+            if (scoreTexts[i] != null)
+            {
+                if (i < topScores.Count)
+                    scoreTexts[i].text = topScores[i].ToString();
+                else
+                    scoreTexts[i].text = "---";
+            }
+        }
+    }
 }
