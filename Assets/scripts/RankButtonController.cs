@@ -1,6 +1,8 @@
 using UnityEngine;
 
 public class RankButtonController : MonoBehaviour
+
+
 {
     [Header("Leaderboard Panel (kéo vô đây)")]
     public GameObject leaderboardPanel;
@@ -15,19 +17,16 @@ public class RankButtonController : MonoBehaviour
     }
 
    
-    private void OnMouseDown()
+   public void ToggleLeaderboard()
+{
+    if (leaderboardPanel != null)
     {
-        if (leaderboardPanel != null)
-        {
-            isOpen = !isOpen;
-            leaderboardPanel.SetActive(isOpen);
-            Debug.Log("📊 Leaderboard " + (isOpen ? "Opened" : "Closed"));
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ Chưa gán Leaderboard Panel!");
-        }
+        bool isActive = leaderboardPanel.activeSelf;
+        leaderboardPanel.SetActive(!isActive);
+        Debug.Log("📊 Leaderboard " + (!isActive ? "Opened" : "Closed"));
     }
+}
+
 
     // 🟢 Hàm này sẽ được gọi từ LeaderboardUI khi Back
     public void ResetState()
